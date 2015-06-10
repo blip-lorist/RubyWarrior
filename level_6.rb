@@ -4,7 +4,7 @@ class Player
     @backtracked = false
     @health = 20
   end
-  
+
   def play_turn(warrior)
 
     # Have you backtracked yet?
@@ -12,11 +12,19 @@ class Player
       @backtracked = true
     end
 
-    # Movement
-    if @backtracked
-      forward_actions(warrior)
+    # Health check
+    # Checks if he needs to back up
+    if @health > warrior.health && warrior.health < 10
+      warrior.walk!(:backward)
+    #Checks if it's safe to heal
+    elsif warrior.health < 15 && warrior.feel.empty? && warrior.health == @health
+      warrior.rest!
     else
-      backward_actions(warrior)
+      if @backtracked
+        forward_actions(warrior)
+      else
+        backward_actions(warrior)
+      end
     end
 
     @health = warrior.health
@@ -25,16 +33,14 @@ class Player
 
   # What to do when you're moonwalking backwards
   def backward_actions(warrior)
-   if warrior.health < 14 && warrior.feel(:backward).empty? && @health <= warrior.health
-      warrior.rest!
-    # Moving forward
-    elsif warrior.feel(:backward).empty?
+    # Moving backward
+    if warrior.feel(:backward).empty?
       warrior.walk!(:backward)
     # Rescues
     elsif warrior.feel(:backward).captive?
       warrior.rescue!(:backward)
     # Fighting
-    else warrior.feel(:backward).enemy?
+    elsif warrior.feel(:backward).enemy?
       warrior.attack!(:backward)
     end
 
@@ -42,13 +48,8 @@ class Player
 
   # What to do when you're strolling forward
   def forward_actions(warrior)
-    # Resting
-    if warrior.health < 14 && warrior.feel.empty? && @health < warrior.health
-      warrior.walk!(:backward)
-    elsif warrior.health < 14 && warrior.feel.empty? && @health >= warrior.health
-      warrior.rest!
     # Moving forward
-    elsif warrior.feel.empty?
+    if warrior.feel.empty?
       warrior.walk!
     # Rescues
     elsif warrior.feel.captive?
